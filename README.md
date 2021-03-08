@@ -16,3 +16,7 @@ This application is a basic Pomodoro Timer used to enhance productivity and mana
 
 - The Focus Duration and Break Duration buttons will be disabled once a session begins. You must end the current session to make adjustments to your intervals.
 - Similarly, the Stop button will be disabled until the session begins.
+
+## GitHub Pages
+
+[Link to Project](https://meleciosilva.github.io/Pomodoro-Timer/)
