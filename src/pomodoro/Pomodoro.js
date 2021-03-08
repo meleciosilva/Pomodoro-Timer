@@ -2,10 +2,8 @@ import React, { useState } from "react";
 import useInterval from "../utils/useInterval";
 import FocusDuration from "./FocusDuration";
 import BreakDuration from "./BreakDuration";
+import SessionScreen from "./SessionScreen";
 import PlayPauseStopButtons from "./PlayPauseButtons";
-import ProgressBar from "./ProgressBar";
-import Paused from "./Paused";
-import FocusOrBreak from "./FocusOrBreak";
 
 function Pomodoro() {
   // Starts with session awaiting start
@@ -25,6 +23,9 @@ function Pomodoro() {
 
   // Starts Pomodoro timer on focus mode
   const [isFocused, setIsFocused] = useState(true);
+
+  // Set intial state of progress bar to 0%
+  const [progress, setProgress] = useState(0);
 
   // adds 5 minutes of focusTime & playTime up to 60 minutes
   function addFocus() {
@@ -58,9 +59,12 @@ function Pomodoro() {
   function stopSession() {
     setSession(false);
     setIsTimerRunning(false);
-    setIsFocused(true);
-    setPlayTime(focusTime * 60);
+    setIsFocused(true); // resets session to focus mode if stopped during a break
+    setPlayTime(focusTime * 60); // resets playTime in seconds
+    setProgress(0); // resets progress bar
   }
+
+  // --------------------- functions that are invoked every second ------------------------ //
 
   // Decrements pomodoro time by 1 second when the timer is running
   function decrementTime() {
@@ -70,14 +74,11 @@ function Pomodoro() {
   // switches between focus and break mode when time runs out and plays bell
   function switchModes() {
     if (playTime < 1) {
+      new Audio(`https://bigsoundbank.com/UPLOAD/mp3/1482.mp3`).play();
       setPlayTime(isFocused ? breakTime * 60 : focusTime * 60);
       setIsFocused((current) => !current);
-      new Audio(`https://bigsoundbank.com/UPLOAD/mp3/1482.mp3`).play();
     }
   }
-
-  // Set intial state of progress bar to 0%
-  const [progress, setProgress] = useState(0);
 
   // increases progress bar completion proportionally based on selected focus or break time
   function increaseProgress() {
@@ -96,31 +97,14 @@ function Pomodoro() {
     isTimerRunning ? 1000 : null
   );
 
-  // displays focusing/on break statement, time remaining, and progress bar when in session
-  const displaySession = () => {
-    if (session) {
-      return {display: 'block'}
-    } else {
-      return {display: 'none'}
-    }
-  }
-
   return (
     <div className="pomodoro">
-
       <div className="row">
         <FocusDuration focusTime={focusTime} handleAdd={addFocus} handleReduce={reduceFocus} inSession={session} />
         <BreakDuration breakTime={breakTime} handleAdd={addBreak} handleReduce={reduceBreak} inSession={session} />
       </div>
-
       <PlayPauseStopButtons isTimerRunning={isTimerRunning} inSession={session} handlePlayPause={playPause} handleStop={stopSession} />
-
-      <div style={displaySession()}>
-        <FocusOrBreak focusTime={focusTime} breakTime={breakTime} isFocused={isFocused} playTime={playTime} />
-        <Paused isTimerRunning={isTimerRunning} />
-        <ProgressBar progress={progress} focusTime={focusTime} breakTime={breakTime} isFocused={isFocused} />
-      </div>
-
+      <SessionScreen inSession={session} isTimerRunning={isTimerRunning} progress={progress} focusTime={focusTime} breakTime={breakTime} isFocused={isFocused} playTime={playTime}/>
     </div>
   );
 }
