@@ -3,7 +3,7 @@ import useInterval from "../utils/useInterval";
 import FocusDuration from "./FocusDuration";
 import BreakDuration from "./BreakDuration";
 import SessionScreen from "./SessionScreen";
-import PlayPauseStopButtons from "./PlayPauseButtons";
+import PlayPauseStopButtons from "./PlayPauseStopButtons";
 
 function Pomodoro() {
   // Starts with session awaiting start
