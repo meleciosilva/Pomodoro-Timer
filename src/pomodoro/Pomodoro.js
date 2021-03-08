@@ -2,33 +2,44 @@ import React, { useState } from "react";
 import classNames from "../utils/class-names";
 import useInterval from "../utils/useInterval";
 import {minutesToDuration, secondsToDuration} from '../utils/duration';
-// import {secondsToDuration} from '../utils/duration';
 
 function Pomodoro() {
-  // Session starts on initial page
+  // Starts with session awaiting start
   const [session, setSession] = useState(false);
   
   // Timer starts out paused
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   
   // Focus time starts at 25 minutes
-  const [focusTime, setFocusTime] = useState(1);
+  const [focusTime, setFocusTime] = useState(25);
 
-  // adds 5 minutes of focus time per click up to 60 minutes
+  // Break time starts at 5 minutes
+  const [breakTime, setBreakTime] = useState(5);
+
+  // Pomodoro play time starts at 25 minutes (1500 seconds)
+  const [playTime, setPlayTime] = useState(1500);
+
+  // adds 5 minutes of focusTime & playTime up to 60 minutes
   function addFocus() {
-    setFocusTime(prevTime => {
-      return prevTime <= 55 ? prevTime + 5 : prevTime
-    })
+    setFocusTime(prevTime => prevTime < 60 ? prevTime + 5 : prevTime);
+    setPlayTime(prevTime => prevTime < 3600 ? prevTime + 300 : prevTime);
   }
   
-  // reduces 5 minutes of focus time down to 5 minutes
+  // reduces 5 minutes of focusTime & playTime down to 5 minutes
   function reduceFocus() {
-    setFocusTime(prevTime => {
-      return prevTime >= 10 ? prevTime - 5 : prevTime;
-    })
+    setFocusTime(prevTime => prevTime > 5 ? prevTime - 5 : prevTime);
+    setPlayTime(prevTime => prevTime > 300 ? prevTime - 300 : prevTime);
   }
-  // Pomodoro play time starts at selected focus time
-  const [playTime, setPlayTime] = useState(focusTime * 60);
+
+  // adds 1 minute to break time up to 15 minutes
+  function addBreak() {
+    setBreakTime(prevTime => prevTime < 15 ? prevTime + 1 : prevTime);
+  }
+  
+  // reduces 1 minute of break time down to 1 minute
+  function reduceBreak() {
+    setBreakTime(prevTime => prevTime > 1 ? prevTime - 1 : prevTime);
+  }
 
   // Starts Pomodoro timer on focus mode
   const [isFocused, setIsFocused] = useState(true);
@@ -36,52 +47,53 @@ function Pomodoro() {
   // Decrements pomodoro time by 1 second when the timer is running
   function decrementTime() {
     if (playTime >= 1) setPlayTime(prevState => prevState - 1);
-    if (playTime === 0 && isFocused) {
-      setPlayTime(breakTime * 60);
-      setIsFocused(current => !current);
-    } 
-    if (playTime === 0 && !isFocused) {
-      setPlayTime(focusTime * 60);
-      setIsFocused(current => !current);
-    }
   } 
-  
-  // Invokes decrementTime function every 1000ms (1 sec) when the timer is running
+
+  // switches between focus and break mode when time runs out and plays bell
+  function switchModes() {
+    if (playTime < 1) {
+      setPlayTime(isFocused ? breakTime * 60 : focusTime * 60);
+      setIsFocused((current) => !current);
+      new Audio(`https://bigsoundbank.com/UPLOAD/mp3/1482.mp3`).play();
+    }
+  }
+
+  // Set intial state of progress bar to 0%
+  const [progress, setProgress] = useState(0);
+
+  // increases progress bar completion
+  function increaseProgress() {
+    if (playTime < 1) return setProgress(0);
+    if (isFocused) {
+      setProgress(prevState => prevState + 1/(focusTime*60) * 100);
+    } else {
+        setProgress(prevState => prevState + 1/(breakTime*60) * 100);
+    }
+  }
+
+  // Invokes decrementTime, switchModes, and increaseProgress functions every 1000ms (1 sec) when the timer is running
   useInterval(
     () => {
       decrementTime();
+      switchModes();
+      increaseProgress();
     },
     isTimerRunning ? 1000 : null
   );
 
-  // sets timer on or off when play/pause button is pressed
+  // sets timer on or off when play/pause button is pressed and starts session (displays countdown)
   function playPause() {
     setSession(true);
     setIsTimerRunning((prevState) => !prevState);
   }
 
-  // stops the focus or break time if stop button is pressed
+  // stops the session and timer, resets playTime to last selected focusTime, and resets to focus mode for next start
   function stopSession() {
     setSession(false);
     setIsTimerRunning(false);
+    setIsFocused(true);
     setPlayTime(focusTime * 60);
   }
-
-  // Displays the selected break time
-  const [breakTime, setBreakTime] = useState(3);
-  
-  function addBreak() {
-    setBreakTime(prevTime => {
-      return prevTime <= 14 ? prevTime + 1 : prevTime
-    })
-  }
-  
-  function reduceBreak() {
-    setBreakTime(prevTime => {
-      return prevTime >= 2 ? prevTime - 1 : prevTime;
-    })
-  }
-
 
   return (
     <div className="pomodoro">
@@ -204,8 +216,8 @@ function Pomodoro() {
                 role="progressbar"
                 aria-valuemin="0"
                 aria-valuemax={isFocused ? focusTime : breakTime}
-                aria-valuenow={playTime} // TODO: Increase aria-valuenow as elapsed time increases
-                style={{ width: playTime }} // TODO: Increase width % as elapsed time increases
+                aria-valuenow={progress} // TODO: Increase aria-valuenow as elapsed time increases
+                style={{ width: `${progress}%` }} // TODO: Increase width % as elapsed time increases
               />
             </div>
           </div>
