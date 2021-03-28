@@ -25,3 +25,8 @@ This application is a basic Pomodoro Timer used to enhance productivity and mana
 
 - Built using React
 - Used conditional rendering to display appropriate components according to sessions (play, pause, stop, etc.)
+
+## Future Goals
+
+- Add a Pomodoro count to keep track of overall progress
+- Implement optional background instrumental music and white noises to enhance focus
